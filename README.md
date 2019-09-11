@@ -3,11 +3,11 @@ Calculating large number factorial in java
 
 see more detail in doc
 
-#Tutorial
+# Tutorial
 
 Just type and enter
 
-`javac Factorial.java && java Factorial 100`
+`>cd code && javac Factorial.java && java Factorial 100`
 
 then run and check result 
 # Performance test
