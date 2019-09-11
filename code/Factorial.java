@@ -91,8 +91,8 @@ public class Factorial {
      * <p>
      * 时间复杂度:O(n^2logn)
      * <p>
-     * 外层n次循环，里层(x!)次乘法
-     * T(n) = n*x! = n * logn! = n * nlogn
+     * 外层n次循环，里层logn!次乘法
+     * T(n) = n*x = n * logn! = n * nlogn
      * T(n) = O(n^2logn)
      * <p>
      * 空间复杂度:O(nlogn)
@@ -149,13 +149,25 @@ public class Factorial {
         return sb.toString();
     }
 
+    /**
+     * 获取阶乘结果的预估位数
+     *
+     * @param n 阶乘数
+     * @return 阶乘结果的预估位数
+     * @link https://en.wikipedia.org/wiki/Stirling%27s_approximation
+     */
+    private static long getFactorialLen(int n) {
+        //使用Stirling公式求n阶乘位数的近似值
+        //Trunc(0.5 * Ln(2 * n * 3.1415926) / Ln(10) + n * Ln(n / Exp(1)) / Ln(10)) + 1
+        return (long) ((0.5 * Math.log(2 * n * Math.PI) / Math.log(10) + n * Math.log(n / Math.exp(1)) / Math.log(10)) + 1);
+    }
 
     /**
      * 大整数阶乘-二分拆分递归相乘版本。
      * <p>
      * 大数的储存和乘法依赖{@code java.math.bigInteger}的实现
      * 由于BigInteger会根据两个大数位数因子来判断使用哪个算法，
-     * 当两个因数均小于 2^32×80 时，用二重循环直接相乘，复杂度为O(n2)，n为因数位数
+     * 当两个因数均小于 2^32×80 时，用二重循环直接相乘，复杂度为O(n^2)，n为因数位数
      * 当两个因数均小于 2^32×240时，采用 Karatsuba algorithm，其复杂度为O(nlog2(3))≈O(n^1.585)
      * 否则采用Toom-Cook multiplication，其复杂度为O(nlog3(5))≈O(n^1.465)
      * <p>
@@ -198,19 +210,6 @@ public class Factorial {
     }
 
     /**
-     * 获取阶乘结果的预估位数
-     *
-     * @param n 阶乘数
-     * @return 阶乘结果的预估位数
-     * @link https://en.wikipedia.org/wiki/Stirling%27s_approximation
-     */
-    private static long getFactorialLen(int n) {
-        //使用Stirling公式求n阶乘位数的近似值
-        //Trunc(0.5 * Ln(2 * n * 3.1415926) / Ln(10) + n * Ln(n / Exp(1)) / Ln(10)) + 1
-        return (long) ((0.5 * Math.log(2 * n * Math.PI) / Math.log(10) + n * Math.log(n / Math.exp(1)) / Math.log(10)) + 1);
-    }
-
-    /**
      * 二分递归计算a*a+1*...*b乘积
      *
      * @param a 乘数
@@ -226,10 +225,10 @@ public class Factorial {
                 return java.math.BigInteger.valueOf(a).multiply(java.math.BigInteger.valueOf(b));
             case 2:
                 return java.math.BigInteger.valueOf(a).multiply(java.math.BigInteger.valueOf(a + 1)).multiply(java.math.BigInteger.valueOf(b));
+            default:
+                int mid = a + b >>> 1;
+                return subFactorial(a, mid).multiply(subFactorial(mid + 1, b));
         }
-
-        int mid = a + b >>> 1;
-        return subFactorial(a, mid).multiply(subFactorial(mid + 1, b));
     }
 
 
@@ -261,11 +260,10 @@ public class Factorial {
      * eg:5! = 120 = 2^3 * 3^1 * 5^1
      * <p>
      * 优化点：
-     * 1、使用快速筛而不是将1~N中每一个数字都质因数分解
+     * 1、使用素数筛而不是将1~N中每一个数字都质因数分解
      * 2、使用幂减少乘法的次数
-     *
      * <p>
-     * 时间复杂度：O(n^4logn)
+     * 时间复杂度：O(n(nlogn)^1.5)
      * <p>
      * 素数筛复杂度为O(nloglogn)
      * 累乘部分 乘法复杂度为O(n(nlogn)^1.5)
@@ -293,8 +291,9 @@ public class Factorial {
         //排除1和2
         flag[0] = flag[1] = true;
 
+        double end = Math.sqrt(n);
         //eratosthenes 从2开始将每个素数的各个倍数，标记成合数
-        for (int i = 2; i <= Math.sqrt(n); i++) {
+        for (int i = 2; i <= end; i++) {
             //如果是一个素数
             if (!flag[i]) {
                 for (int j = i * i; j <= n; j += i) {
@@ -308,8 +307,8 @@ public class Factorial {
             if (!flag[i]) {
                 int cnt = 0;
                 double tmp;
-                //循环计算n/p,n/p^2,n/p^3,直到p^k > n结束
-                for (int k = 1; (tmp = Math.pow(i, k)) <= n; k++) {//统计p出现的次数
+                //循环计算n/p,n/p^2,n/p^3,直到p^k > n结束 n!里面含有多少个p
+                for (int k = 1; (tmp = Math.pow(i, k)) <= n; k++) {
                     cnt += n / tmp;
                 }
                 //求质数的cnt幂，再累乘起来
@@ -400,7 +399,6 @@ public class Factorial {
         int time1 = timeFinish1 - timeBegin1;
         System.out.println("multiplyByInt计算耗时: " + time1 + "毫秒");
 
-
         int timeBegin2 = (int) System.currentTimeMillis();
         String s2 = binarySplit(n);
         int timeFinish2 = (int) System.currentTimeMillis();
@@ -419,10 +417,10 @@ public class Factorial {
         int time4 = timeFinish4 - timeBegin4;
         System.out.println("moessner计算: " + time4 + "毫秒");
 
-        assert s1.equals(s);
-        assert s2.equals(s);
-        assert s3.equals(s);
-        assert s4.equals(s);
+        System.out.println(s1.equals(s));
+        System.out.println(s2.equals(s));
+        System.out.println(s3.equals(s));
+        System.out.println(s4.equals(s));
     }
 
 }
